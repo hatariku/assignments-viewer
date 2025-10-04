@@ -5,12 +5,12 @@
       "name": "classroom",
       "url": "https://classroom.google.com/u/0/h",
       "steps": [
-        { "wait_css": "div[jsname][role='list']" }
+        { "wait_css": "a.onkcGd[href^='/c/']" }
       ],
-      "item": "div[jsname][role='listitem'], div[jsname][role='list'] > div",
-      "title": "h2, span.YVvGBb, div[jscontroller] h2",
-      "course": "div[aria-label*='クラス'], div[aria-label*='授業'], div.YVvGBb",
-      "due": "span[aria-label*='期限'], div[aria-label*='期限'], div:has(span[aria-label*='期限']) span"
+      "item": "a.onkcGd[href^='/c/']",
+      "title": "div.ScpeUc, h2.prWPdf",
+      "course": "div.FWGURc, div.ScpeUc",
+      "due": "span[aria-label*='期限'], div[aria-label*='期限']"
     }
   ]
 }
