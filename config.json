@@ -3,7 +3,7 @@
   "targets": [
     {
       "name": "portal",
-      "url": "https://slbsso.meijo-u.ac.jp",
+      "url": "https://portal.meijo-u.ac.jp",
       "steps": [
         { "wait_css": "body" },
         { "click_css": "a[href*='webclass']" },
