@@ -1,0 +1,39 @@
+{
+  "chrome_profile_path": "C:/Users/あなたのユーザー名/AppData/Local/Google/Chrome/User Data",
+
+  "targets": [
+    {
+      "name": "portal",
+      "url": "https://portal.example.ac.jp/home",
+      "steps": [
+        { "wait_css": "a, body" },
+        { "click_css": "a[href*='webclass'], a:has(> span:contains('WebClass'))" },
+        { "wait_css": ".course-list, #courses, iframe" },
+
+        /* もしWebClassが iframe 内なら有効化。不要なら削除 */
+        { "iframe_css": "iframe#mainFrame" },
+
+        /* 科目一覧 → 先頭科目を開く（UIに合わせて調整） */
+        { "click_css": ".course-list .course-item a, .course-list a[href*='course']" },
+        { "wait_css": ".assignments-tab, a[href*='assign']" },
+        { "click_css": ".assignments-tab, a[href*='assign']" },
+        { "wait_css": ".assignment-item, tr.assignment-row, .task" }
+      ],
+      "item": ".assignment-item, tr.assignment-row, .task",
+      "title": ".title, td.title, .task-title",
+      "course": ".course, td.course, .course-name, h1.course-title",
+      "due": ".due, .deadline, td.deadline, .task-deadline"
+    },
+    {
+      "name": "classroom",
+      "url": "https://classroom.google.com/u/0/h",
+      "steps": [
+        { "wait_css": ".YVvGBb, .VfPpkd-card, [jscontroller]" }
+      ],
+      "item": ".YVvGBb, .VfPpkd-card, [jscontroller]",
+      "title": "[data-item-title], .TrZEUc, .VfPpkd-card__title",
+      "course": ".tUJKGd, .tdCJdf, .Kk7lMc",
+      "due": ".IMvYId, .dR9lJ, .bFjUmb"
+    }
+  ]
+}
