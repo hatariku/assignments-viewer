@@ -4,7 +4,7 @@
   "targets": [
     {
       "name": "portal",
-      "url": "https://portal.example.ac.jp/home",
+      "url": "https://slbsso.meijo-u.ac.jp",
       "steps": [
         { "wait_css": "a, body" },
         { "click_css": "a[href*='webclass'], a:has(> span:contains('WebClass'))" },
