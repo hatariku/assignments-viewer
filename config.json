@@ -2,32 +2,15 @@
   "chrome_profile_path": "C:/Users/hatar/AppData/Local/Google/Chrome/User Data",
   "targets": [
     {
-      "name": "portal",
-      "url": "https://portal.meijo-u.ac.jp",
-      "steps": [
-        { "wait_css": "body" },
-        { "click_css": "a[href*='webclass']" },
-        { "wait_css": ".course-list, #courses, iframe" },
-        { "click_css": ".course-list .course-item a, .course-list a[href*='course']" },
-        { "wait_css": ".assignments-tab, a[href*='assign']" },
-        { "click_css": ".assignments-tab, a[href*='assign']" },
-        { "wait_css": ".assignment-item, tr.assignment-row, .task" }
-      ],
-      "item": ".assignment-item, tr.assignment-row, .task",
-      "title": ".title, td.title, .task-title",
-      "course": ".course, td.course, .course-name, h1.course-title",
-      "due": ".due, .deadline, td.deadline, .task-deadline"
-    },
-    {
       "name": "classroom",
       "url": "https://classroom.google.com/u/0/h",
       "steps": [
-        { "wait_css": ".YVvGBb, .VfPpkd-card, [jscontroller]" }
+        { "wait_css": "div[jsname][role='list']" }
       ],
-      "item": ".YVvGBb, .VfPpkd-card, [jscontroller]",
-      "title": "[data-item-title], .TrZEUc, .VfPpkd-card__title",
-      "course": ".tUJKGd, .tdCJdf, .Kk7lMc",
-      "due": ".IMvYId, .dR9lJ, .bFjUmb"
+      "item": "div[jsname][role='listitem'], div[jsname][role='list'] > div",
+      "title": "h2, span.YVvGBb, div[jscontroller] h2",
+      "course": "div[aria-label*='クラス'], div[aria-label*='授業'], div.YVvGBb",
+      "due": "span[aria-label*='期限'], div[aria-label*='期限'], div:has(span[aria-label*='期限']) span"
     }
   ]
 }
