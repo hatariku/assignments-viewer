@@ -140,9 +140,17 @@ def main():
     all_rows = []
     try:
         # 1) タブを開く
+        print("タブを開きます…")
+
+        # 1つ目のURLを開く
+        first = True
         for t in cfg["targets"]:
-            driver.switch_to.new_window('tab')
-            driver.get(t["url"])
+            if first:
+                print("GET:", t["url"])
+                driver.get(t["url"])
+                first = False
+            else:
+                driver.execute_script(f"window.open('{t['url']}', '_blank');")
 
         # 2) ログイン（手動）
         print("👉 各タブでログインしてください。完了したら Enter を押すと取得を開始します。")
