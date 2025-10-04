@@ -10,6 +10,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.service import Service
 
 JST = timezone(timedelta(hours=9))
 
@@ -133,7 +134,8 @@ def main():
     options = Options()
     options.add_argument(f'user-data-dir={cfg["chrome_profile_path"]}')  # 普段のChromeプロファイルで起動
     options.add_argument("--start-maximized")
-    driver = webdriver.Chrome(options=options)
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=options)
 
     all_rows = []
     try:
