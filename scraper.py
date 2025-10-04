@@ -132,7 +132,7 @@ def do_steps(driver, steps: list):
 def main():
     cfg = json.loads(Path("config.json").read_text(encoding="utf-8"))
     options = Options()
-    options.add_argument(f'user-data-dir={cfg["chrome_profile_path"]}')  # 普段のChromeプロファイルで起動
+    #options.add_argument(f'user-data-dir={cfg["chrome_profile_path"]}')  # 普段のChromeプロファイルで起動
     options.add_argument("--start-maximized")
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
