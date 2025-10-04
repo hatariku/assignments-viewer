@@ -1,19 +1,13 @@
 {
   "chrome_profile_path": "C:/Users/hatar/AppData/Local/Google/Chrome/User Data",
-
   "targets": [
     {
       "name": "portal",
       "url": "https://slbsso.meijo-u.ac.jp",
       "steps": [
-        { "wait_css": "a, body" },
-        { "click_css": "a[href*='webclass'], a:has(> span:contains('WebClass'))" },
+        { "wait_css": "body" },
+        { "click_css": "a[href*='webclass']" },
         { "wait_css": ".course-list, #courses, iframe" },
-
-        /* もしWebClassが iframe 内なら有効化。不要なら削除 */
-        { "iframe_css": "iframe#mainFrame" },
-
-        /* 科目一覧 → 先頭科目を開く（UIに合わせて調整） */
         { "click_css": ".course-list .course-item a, .course-list a[href*='course']" },
         { "wait_css": ".assignments-tab, a[href*='assign']" },
         { "click_css": ".assignments-tab, a[href*='assign']" },
