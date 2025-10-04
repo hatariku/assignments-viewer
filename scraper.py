@@ -133,7 +133,7 @@ def main():
     options = Options()
     options.add_argument(f'user-data-dir={cfg["chrome_profile_path"]}')  # 普段のChromeプロファイルで起動
     options.add_argument("--start-maximized")
-    driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+    driver = webdriver.Chrome(options=options)
 
     all_rows = []
     try:
