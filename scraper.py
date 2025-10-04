@@ -5,12 +5,12 @@ from datetime import datetime, timezone, timedelta
 from bs4 import BeautifulSoup
 
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.edge.service import Service as EdgeService
+from webdriver_manager.microsoft import EdgeChromiumDriverManager
 
 JST = timezone(timedelta(hours=9))
 
@@ -131,11 +131,15 @@ def do_steps(driver, steps: list):
 
 def main():
     cfg = json.loads(Path("config.json").read_text(encoding="utf-8"))
-    options = Options()
-    #options.add_argument(f'user-data-dir={cfg["chrome_profile_path"]}')  # 普段のChromeプロファイルで起動
+    options = EdgeOptions()
     options.add_argument("--start-maximized")
-    service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=options)
+
+# （任意）Edgeのプロファイルを使いたい場合はここを自分の環境に
+# options.add_argument("user-data-dir=C:/Users/あなた/AppData/Local/Microsoft/Edge/User Data")
+
+    service = EdgeService(EdgeChromiumDriverManager().install())
+    driver = webdriver.Edge(service=service, options=options)
+
 
     all_rows = []
     try:
