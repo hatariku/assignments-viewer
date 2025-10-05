@@ -1,80 +1,8 @@
 [
   {
     "source": "classroom",
-    "title": "PBL概論",
-    "course": "PBL概論",
-    "due_raw": "",
-    "due_iso": "",
-    "due_ts": 0
-  },
-  {
-    "source": "classroom",
-    "title": "アプリケーション開発",
-    "course": "アプリケーション開発",
-    "due_raw": "",
-    "due_iso": "",
-    "due_ts": 0
-  },
-  {
-    "source": "classroom",
-    "title": "オペレーティングシステム（2025年度）",
-    "course": "オペレーティングシステム（2025年度）",
-    "due_raw": "",
-    "due_iso": "",
-    "due_ts": 0
-  },
-  {
-    "source": "classroom",
-    "title": "ソフトウェア工学 (Bクラス)",
-    "course": "ソフトウェア工学 (Bクラス)",
-    "due_raw": "",
-    "due_iso": "",
-    "due_ts": 0
-  },
-  {
-    "source": "classroom",
-    "title": "データベース（2025年度）",
-    "course": "データベース（2025年度）",
-    "due_raw": "",
-    "due_iso": "",
-    "due_ts": 0
-  },
-  {
-    "source": "classroom",
-    "title": "プログラミング演習Ⅳ",
-    "course": "プログラミング演習Ⅳ",
-    "due_raw": "",
-    "due_iso": "",
-    "due_ts": 0
-  },
-  {
-    "source": "classroom",
-    "title": "モバイルアプリ開発B",
-    "course": "モバイルアプリ開発B",
-    "due_raw": "",
-    "due_iso": "",
-    "due_ts": 0
-  },
-  {
-    "source": "classroom",
-    "title": "応用解析(2025後期)",
-    "course": "応用解析(2025後期)",
-    "due_raw": "",
-    "due_iso": "",
-    "due_ts": 0
-  },
-  {
-    "source": "classroom",
-    "title": "情報工学実験II (B1)",
-    "course": "情報工学実験II (B1)",
-    "due_raw": "",
-    "due_iso": "",
-    "due_ts": 0
-  },
-  {
-    "source": "classroom",
-    "title": "研究開発リテラシー (Bクラス)",
-    "course": "研究開発リテラシー (Bクラス)",
+    "title": "割り当て済み",
+    "course": "(科目不明/classroom)",
     "due_raw": "",
     "due_iso": "",
     "due_ts": 0
