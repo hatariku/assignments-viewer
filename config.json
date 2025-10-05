@@ -5,12 +5,12 @@
       "name": "classroom",
       "url": "https://classroom.google.com/u/0/a/not-turned-in/all",
       "steps": [
-        { "wait_css": "div[role='list']" }
+        { "wait_css": "div[role='region']" }
       ],
-      "item": "div[role='list'] > div[role='listitem'], div[role='list'] div[data-item-id]",
-      "title": "h2, div[role='heading'], a[aria-label]",
-      "course": "a[href*='/c/'] div, a[href*='/c/'], div[aria-label*='クラス']",
-      "due": "span[aria-label*='期限'], div[aria-label*='期限'], time"
+      "item": "div[role='region'] div[jsname][data-item-id]", 
+      "title": "div[role='region'] div[jsname][data-item-id] div.YVvGBb, div[jsname][data-item-id] h2, div[jsname][data-item-id] .z3vRcc",
+      "course": "div[role='region'] div[jsname][data-item-id] div.tUJKGd, div[role='region'] div[jsname][data-item-id] .Kk7lMc",
+      "due": "div[role='region'] div[jsname][data-item-id] div.IMvYId, div[role='region'] div[jsname][data-item-id] time"
     }
   ]
 }
