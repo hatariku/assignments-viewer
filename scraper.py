@@ -138,7 +138,7 @@ def main():
 
     # ★ 普段使っているChromeプロファイルを指定（これが自動ログインのポイント！）
     options.add_argument(r"--user-data-dir=C:\Users\hatar\AppData\Local\Google\Chrome\User Data")
-    options.add_argument("--profile-directory=Default")  # "Profile 1" など使っているプロファイルに応じて変更
+    options.add_argument("--profile-directory=Profile 1")  # "Profile 1" など使っているプロファイルに応じて変更
 
     # === ChromeDriverを自動セットアップ ===
     service = Service(ChromeDriverManager().install())
