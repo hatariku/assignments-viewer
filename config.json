@@ -1,11 +1,16 @@
 {
-  "name": "classroom",
-  "url": "https://classroom.google.com/u/0/a/not-turned-in/all",
-  "steps": [
-    { "wait_css": ".YVvGBb, .VfPpkd-card, [jscontroller]" }
-  ],
-  "item": ".YVvGBb, .VfPpkd-card, [jscontroller]",
-  "title": "[data-item-title], .TrZEUc, .VfPpkd-card__title, .z3vRcc",
-  "course": ".tUJKGd, .tdCJdf, .Kk7lMc",
-  "due": ".IMvYId, .dR9lJ, .bFjUmb, .VfPpkd-wzTsWb, .MocG8c"
+  "chrome_profile_path": "C:/Users/hatar/AppData/Local/Google/Chrome/SeleniumProfile",
+  "targets": [
+    {
+      "name": "classroom",
+      "url": "https://classroom.google.com/u/0/a/not-turned-in/all",
+      "steps": [
+        { "wait_css": "div[role='list']" }
+      ],
+      "item": "div[role='list'] > div[role='listitem'], div[role='list'] div[data-item-id]",
+      "title": "h2, div[role='heading'], a[aria-label]",
+      "course": "a[href*='/c/'] div, a[href*='/c/'], div[aria-label*='クラス']",
+      "due": "span[aria-label*='期限'], div[aria-label*='期限'], time"
+    }
+  ]
 }
