@@ -5,12 +5,14 @@
       "name": "classroom",
       "url": "https://classroom.google.com/u/0/a/not-turned-in/all",
       "steps": [
-        { "wait_css": "div[role='region']" }
+        { "wait_css": "div[role='tablist']" },
+        { "click_css": "div[role='tablist'] [role='tab']:nth-child(2)" }, 
+        { "wait_css": "div[role='region'] [role='list'], c-wiz [role='list']" }
       ],
-      "item": "div[role='region'] div[jsname][data-item-id]", 
-      "title": "div[role='region'] div[jsname][data-item-id] div.YVvGBb, div[jsname][data-item-id] h2, div[jsname][data-item-id] .z3vRcc",
-      "course": "div[role='region'] div[jsname][data-item-id] div.tUJKGd, div[role='region'] div[jsname][data-item-id] .Kk7lMc",
-      "due": "div[role='region'] div[jsname][data-item-id] div.IMvYId, div[role='region'] div[jsname][data-item-id] time"
+      "item": "div[role='region'] [role='list'] [role='listitem'], c-wiz [role='list'] [role='listitem'], [data-item-id][jsname]",
+      "title": "[role='listitem'] h2, [role='listitem'] a[aria-label], [role='listitem'] .z3vRcc",
+      "course": "[role='listitem'] a[href*='/c/'], [role='listitem'] [aria-label*='クラス']",
+      "due": "[role='listitem'] time, [role='listitem'] [aria-label*='期限'], [role='listitem'] .IMvYId"
     }
   ]
 }
