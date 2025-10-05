@@ -145,7 +145,14 @@ def main():
 
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
-    driver.maximize_window()
+
+# ウィンドウが準備できてから最大化を試す（失敗しても無視）
+    try:
+        if driver.window_handles:
+            driver.switch_to.window(driver.window_handles[0])
+            driver.maximize_window()
+    except Exception:
+        pass  # --start-maximized があるので実害なし
 
     all_rows = []
     try:
