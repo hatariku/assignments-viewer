@@ -4,13 +4,10 @@ from pathlib import Path
 from datetime import datetime, timezone, timedelta
 from bs4 import BeautifulSoup
 
-from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from selenium import webdriver
 
 JST = timezone(timedelta(hours=9))
 
@@ -135,12 +132,15 @@ def main():
     # === Chromeの設定 ===
     options = Options()
     options.add_argument("--start-maximized")
+# ★ 専用のユーザーデータフォルダ（存在しなくてOK。自動作成されます）
+    options.add_argument(r"--user-data-dir=C:\Users\hatar\AppData\Local\Google\Chrome\SeleniumProfile")
+# プロファイル名は指定しない（競合の元になるので）
+# options.add_argument("--profile-directory=Default")  # ← これは外す
 
-    # ★ 普段使っているChromeプロファイルを指定（これが自動ログインのポイント！）
-    options.add_argument(r"--user-data-dir=C:\Users\hatar\AppData\Local\Google\Chrome\User Data")
-    options.add_argument("--profile-directory=Default")  # "Profile 1" など使っているプロファイルに応じて変更
+# 起動時の余計なダイアログを避けるオプション（任意）
+    options.add_argument("--no-first-run")
+    options.add_argument("--no-default-browser-check")
 
-    # === ChromeDriverを自動セットアップ ===
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
     driver.maximize_window()
