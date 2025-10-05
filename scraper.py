@@ -5,12 +5,12 @@ from datetime import datetime, timezone, timedelta
 from bs4 import BeautifulSoup
 
 from selenium import webdriver
-from selenium.webdriver.edge.options import Options as EdgeOptions
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.edge.service import Service as EdgeService
-from webdriver_manager.microsoft import EdgeChromiumDriverManager
 
 JST = timezone(timedelta(hours=9))
 
@@ -131,15 +131,19 @@ def do_steps(driver, steps: list):
 
 def main():
     cfg = json.loads(Path("config.json").read_text(encoding="utf-8"))
-    options = EdgeOptions()
+
+    # === Chromeの設定 ===
+    options = Options()
     options.add_argument("--start-maximized")
 
-# （任意）Edgeのプロファイルを使いたい場合はここを自分の環境に
-# options.add_argument("user-data-dir=C:/Users/あなた/AppData/Local/Microsoft/Edge/User Data")
+    # ★ 普段使っているChromeプロファイルを指定（これが自動ログインのポイント！）
+    options.add_argument(r"--user-data-dir=C:\Users\hatar\AppData\Local\Google\Chrome\User Data")
+    options.add_argument("--profile-directory=Default")  # "Profile 1" など使っているプロファイルに応じて変更
 
-    service = EdgeService(EdgeChromiumDriverManager().install())
-    driver = webdriver.Edge(service=service, options=options)
-
+    # === ChromeDriverを自動セットアップ ===
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=options)
+    driver.maximize_window()
 
     all_rows = []
     try:
@@ -148,9 +152,9 @@ def main():
         for t in cfg["targets"]:
             print("GET:", t["url"])
             driver.execute_script(f"window.open('{t['url']}', '_blank');")
+
         print("👉 各タブでログインしてください。完了したらここで Enter を押します。")
         input()
-
 
         # 3) それぞれのタブで遷移→解析
         for t in cfg["targets"]:
@@ -158,20 +162,21 @@ def main():
             for h in driver.window_handles:
                 driver.switch_to.window(h)
                 if domain in driver.current_url:
-                    # 念のため default_content に戻す
-                    try: driver.switch_to.default_content()
-                    except: pass
+                    try:
+                        driver.switch_to.default_content()
+                    except:
+                        pass
 
-                    # ログイン後の遷移（WebClassなど）
                     do_steps(driver, t.get("steps"))
-
                     time.sleep(1.0)
                     html = driver.page_source
                     rows = scrape_html(html, t, t["name"])
                     all_rows += rows
 
-                    try: driver.switch_to.default_content()
-                    except: pass
+                    try:
+                        driver.switch_to.default_content()
+                    except:
+                        pass
                     break
 
         if not all_rows:
@@ -181,8 +186,10 @@ def main():
         rows = dedupe(all_rows)
         write_outputs(rows, Path("out"))
         print("✅ out/assignments.csv, assignments.json, assignments.ics を出力しました。")
+
     finally:
         driver.quit()
+
 
 if __name__ == "__main__":
     main()
