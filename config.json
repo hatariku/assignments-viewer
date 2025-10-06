@@ -6,10 +6,10 @@
       "url": "https://classroom.google.com/u/0/a/not-turned-in/all",
       "steps": [
         { "wait_css": "div[role='tablist']" },
-        { "click_css": "div[role='tablist'] [role='tab']:nth-child(2)" },
-        { "wait_css": "div[role='region']" },
-        { "click_css": "button[aria-label='展開'], div[aria-label='展開']" }, 
-        { "wait_css": "div[role='region'] [role='listitem']" }
+        { "click_css": "div[role='tablist'] [role='tab']:nth-child(2)" },   
+        { "wait_css": "main, div[role='region']" },
+        { "click_css_all": "button[aria-label='展開'], div[aria-label='展開'], [role='button'][aria-expanded='false']" },
+        { "wait_css": "[role='listitem'], [data-item-id][jsname]" }
       ],
       "item": "div[role='region'] [role='listitem'], c-wiz [role='list'] [role='listitem'], [data-item-id][jsname]",
       "title": "[role='listitem'] h2, [role='listitem'] a[aria-label], [role='listitem'] .z3vRcc",

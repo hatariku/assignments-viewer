@@ -115,20 +115,32 @@ def write_outputs(rows, outdir: Path):
     (outdir / "assignments.ics").write_text("\r\n".join(lines), encoding="utf-8")
 
 def do_steps(driver, steps: list):
-    """ログイン後の遷移（WebClassへ移動→課題タブ→一覧表示 など）"""
-    wait = WebDriverWait(driver, 20)
+    """ログイン後の遷移（タブ切替・展開クリック 等）"""
+    wait = WebDriverWait(driver, 40)  # ←少し長めに
     for st in steps or []:
         if "wait_css" in st:
             wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, st["wait_css"])))
         if "click_css" in st:
             el = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, st["click_css"])))
             driver.execute_script("arguments[0].scrollIntoView({block:'center'});", el)
-            el.click()
+            driver.execute_script("arguments[0].click();", el)  # click()より安定
+            time.sleep(0.3)
+        if "click_css_all" in st:
+            # 画面内にある対象を全部クリック（展開ボタンなど）
+            elems = driver.find_elements(By.CSS_SELECTOR, st["click_css_all"])
+            for el in elems:
+                try:
+                    driver.execute_script("arguments[0].scrollIntoView({block:'center'});", el)
+                    driver.execute_script("arguments[0].click();", el)
+                    time.sleep(0.15)
+                except Exception:
+                    pass
         if "goto" in st:
             driver.get(st["goto"])
         if "iframe_css" in st:
             iframe = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, st["iframe_css"])))
             driver.switch_to.frame(iframe)
+
 
 def main():
     cfg = json.loads(Path("config.json").read_text(encoding="utf-8"))
