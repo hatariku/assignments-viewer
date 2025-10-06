@@ -150,7 +150,7 @@ def main():
     cfg = json.loads(Path("config.json").read_text(encoding="utf-8"))
 
     # === Chromeの設定 ===
-    CHROMEDRIVER_PATH = r"C:\Users\hatar\Downloads\chromedriver-win64\chromedriver.exe"  # ← 自分のchromedriver.exeのパス
+    CHROMEDRIVER_PATH = r"C:\Users\hatar\Downloads\chromedriver-win64\chromedriver-win64\chromedriver.exe"
 
     options = Options()
     options.add_argument("--start-maximized")
