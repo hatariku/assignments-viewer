@@ -115,18 +115,22 @@ def write_outputs(rows, outdir: Path):
     (outdir / "assignments.ics").write_text("\r\n".join(lines), encoding="utf-8")
 
 def do_steps(driver, steps: list):
-    """ログイン後の遷移（タブ切替・展開クリック 等）"""
-    wait = WebDriverWait(driver, 40)  # ←少し長めに
+    wait = WebDriverWait(driver, 40)  # 余裕をもって
     for st in steps or []:
         if "wait_css" in st:
-            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, st["wait_css"])))
+            # 広めに待つ（まずはページ骨格）
+            sel = st["wait_css"]
+            try:
+                wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, sel)))
+            except Exception:
+                # 骨格が変わるケースに備え、bodyだけでも一旦許容
+                wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "body")))
         if "click_css" in st:
             el = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, st["click_css"])))
             driver.execute_script("arguments[0].scrollIntoView({block:'center'});", el)
-            driver.execute_script("arguments[0].click();", el)  # click()より安定
+            driver.execute_script("arguments[0].click();", el)  # clickより安定
             time.sleep(0.3)
         if "click_css_all" in st:
-            # 画面内にある対象を全部クリック（展開ボタンなど）
             elems = driver.find_elements(By.CSS_SELECTOR, st["click_css_all"])
             for el in elems:
                 try:
@@ -147,19 +151,11 @@ def main():
 
     # === Chromeの設定 ===
     options = Options()
+    options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")  # ← デバッグモードのChromeに接続
     options.add_argument("--start-maximized")
-# ★ 専用のユーザーデータフォルダ（存在しなくてOK。自動作成されます）
-    options.add_argument(r"--user-data-dir=C:\Users\hatar\AppData\Local\Google\Chrome\SeleniumProfile")
-# プロファイル名は指定しない（競合の元になるので）
-# options.add_argument("--profile-directory=Default")  # ← これは外す
-
-# 起動時の余計なダイアログを避けるオプション（任意）
-    options.add_argument("--no-first-run")
-    options.add_argument("--no-default-browser-check")
 
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
-
 # ウィンドウが準備できてから最大化を試す（失敗しても無視）
     try:
         if driver.window_handles:
