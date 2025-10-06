@@ -153,58 +153,30 @@ def main():
     CHROMEDRIVER_PATH = r"C:\Users\hatar\Downloads\chromedriver-win64\chromedriver-win64\chromedriver.exe"
 
     options = Options()
+    options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")  # ここが重要！
     options.add_argument("--start-maximized")
 
-    # ログイン済みのChromeプロファイルを使う
-    options.add_argument(r"--user-data-dir=C:\Users\hatar\AppData\Local\Google\Chrome\User Data")
-    options.add_argument("--profile-directory=Default")
-
-    # ✅ webdriver-manager は使わず、手動ダウンロードしたドライバを指定！
     service = Service(CHROMEDRIVER_PATH)
     driver = webdriver.Chrome(service=service, options=options)
 
-    # ウィンドウが準備できてから最大化を試す（失敗しても無視）
+    print("🌐 Classroomを開きます...")
+    driver.get("https://classroom.google.com/u/0/a/not-turned-in/all")
+
     try:
-        if driver.window_handles:
-            driver.switch_to.window(driver.window_handles[0])
-            driver.maximize_window()
-    except Exception:
-        pass  # --start-maximized があるので実害なし
+        WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "body"))
+        )
+        print("✅ Classroomにアクセス成功！")
+    except:
+        print("⚠️ ページが読み込めませんでした。")
 
-    all_rows = []
-    try:
-        # 1) タブを開く
-        print("タブを開きます…")
-        for t in cfg["targets"]:
-            print("GET:", t["url"])
-            # ★ 直接そのURLにアクセス（新しいタブを開かない）
-            driver.get(t["url"])
-            time.sleep(2)
+    input("ページを確認したら Enter を押してください：")
 
-        print("👉 各タブでログインしてください。完了したらここで Enter を押します。")
-        input()
+    html = driver.page_source
+    Path("out/debug.html").write_text(html, encoding="utf-8")
+    print("✅ ページHTMLを out/debug.html に保存しました。")
 
-        # 3) それぞれのタブで遷移→解析
-        for t in cfg["targets"]:
-            print("🔎 navigate:", t["url"])
-            driver.get(t["url"])                 # ← 直接そのURLへ
-            time.sleep(1.0)                      # 初期描画待ち（短め）
-            do_steps(driver, t.get("steps"))     # 遷移＆展開クリックなど
-            time.sleep(0.5)
-            html = driver.page_source
-            rows = scrape_html(html, t, t["name"])
-            all_rows += rows
-
-        if not all_rows:
-            print("⚠️ 課題が見つかりませんでした。config のセレクタ（item/title/course/due）を調整してください。")
-            return
-
-        rows = dedupe(all_rows)
-        write_outputs(rows, Path("out"))
-        print("✅ out/assignments.csv, assignments.json, assignments.ics を出力しました。")
-
-    finally:
-        driver.quit()
+    driver.quit()
 
 
 if __name__ == "__main__":
