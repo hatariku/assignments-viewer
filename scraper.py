@@ -150,15 +150,20 @@ def main():
     cfg = json.loads(Path("config.json").read_text(encoding="utf-8"))
 
     # === Chromeの設定 ===
-    CHROMEDRIVER_PATH = r"C:\Users\hatar\Downloads\chromedriver-win64\chromedriver.exe"
+    CHROMEDRIVER_PATH = r"C:\Users\hatar\Downloads\chromedriver-win64\chromedriver.exe"  # ← 自分のchromedriver.exeのパス
 
     options = Options()
-    options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")  # ← デバッグモードのChromeに接続
     options.add_argument("--start-maximized")
 
-    service = Service(ChromeDriverManager().install())
+    # ログイン済みのChromeプロファイルを使う
+    options.add_argument(r"--user-data-dir=C:\Users\hatar\AppData\Local\Google\Chrome\User Data")
+    options.add_argument("--profile-directory=Default")
+
+    # ✅ webdriver-manager は使わず、手動ダウンロードしたドライバを指定！
+    service = Service(CHROMEDRIVER_PATH)
     driver = webdriver.Chrome(service=service, options=options)
-# ウィンドウが準備できてから最大化を試す（失敗しても無視）
+
+    # ウィンドウが準備できてから最大化を試す（失敗しても無視）
     try:
         if driver.window_handles:
             driver.switch_to.window(driver.window_handles[0])
