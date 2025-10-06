@@ -181,26 +181,14 @@ def main():
 
         # 3) それぞれのタブで遷移→解析
         for t in cfg["targets"]:
-            domain = t["url"].split("/")[2]
-            for h in driver.window_handles:
-                driver.switch_to.window(h)
-                if domain in driver.current_url:
-                    try:
-                        driver.switch_to.default_content()
-                    except:
-                        pass
-
-                    do_steps(driver, t.get("steps"))
-                    time.sleep(1.0)
-                    html = driver.page_source
-                    rows = scrape_html(html, t, t["name"])
-                    all_rows += rows
-
-                    try:
-                        driver.switch_to.default_content()
-                    except:
-                        pass
-                    break
+            print("🔎 navigate:", t["url"])
+            driver.get(t["url"])                 # ← 直接そのURLへ
+            time.sleep(1.0)                      # 初期描画待ち（短め）
+            do_steps(driver, t.get("steps"))     # 遷移＆展開クリックなど
+            time.sleep(0.5)
+            html = driver.page_source
+            rows = scrape_html(html, t, t["name"])
+            all_rows += rows
 
         if not all_rows:
             print("⚠️ 課題が見つかりませんでした。config のセレクタ（item/title/course/due）を調整してください。")
