@@ -78,33 +78,89 @@ def main():
 
     CHROMEDRIVER_PATH = r"C:\Users\hatar\Downloads\chromedriver-win64\chromedriver-win64\chromedriver.exe"
     options = Options()
-    options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
+    options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")  # 既に開いてるChromeへ接続
     service = Service(CHROMEDRIVER_PATH)
     driver = webdriver.Chrome(service=service, options=options)
 
-    print("🌐 Classroom にアクセス中...")
-    driver.get(target["url"])
+    # === 試すURLを2パターン ===
+    urls = [
+        "https://classroom.google.com/u/0/a/assigned/all",      # 割り当て済み
+        "https://classroom.google.com/u/0/a/not-turned-in/all", # 未提出
+    ]
 
-    # 新：
-    try:
-        WebDriverWait(driver, 30).until(
-            EC.presence_of_any_elements_located((By.CSS_SELECTOR, target["item"]))
-        )
-        print("✅ ページ要素を検出しました。")
-    except:
-        print("⚠️ 要素を検出できませんでしたが続行します。")
+    all_rows = []
+    for url in urls:
+        print(f"🌐 Classroom にアクセス中... ({url})")
+        driver.get(url)
 
-    print("✅ ページを読み込みました。")
+        try:
+            WebDriverWait(driver, 30).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "body"))
+            )
+            print("✅ ページの基本構造を検出。")
+        except:
+            print("⚠️ ページが完全に読み込まれませんでしたが続行します。")
 
-    html = driver.page_source
-    Path("out/debug.html").write_text(html, encoding="utf-8")
+        # === 「展開」ボタンをクリック ===
+        print("🔽 展開ボタンをクリック中...")
+        toggle_selectors = [
+            "[aria-label*='展開']",
+            "button[aria-label*='展開']",
+            "div[role='button'][aria-label*='展開']",
+            "[data-tooltip*='展開']"
+        ]
+        for sel in toggle_selectors:
+            for b in driver.find_elements(By.CSS_SELECTOR, sel):
+                try:
+                    driver.execute_script("arguments[0].scrollIntoView({block:'center'});", b)
+                    time.sleep(0.3)
+                    b.click()
+                    print(f"　➡ 展開クリック: {sel}")
+                    time.sleep(0.4)
+                except Exception:
+                    pass
 
-    rows = scrape_html(html, target, target["name"])
-    write_outputs(rows, Path("out"))
-    driver.quit()
+        time.sleep(1.5)
+        html = driver.page_source
+        soup = BeautifulSoup(html, "lxml")
+
+        # 広めのセレクタ
+        item_sel = "div[role='listitem'], c-wiz[jsrenderer], .YVvGBb, .VfPpkd-card"
+        title_sel = "h3, h2, .TrZEUc, .YVvGBb, .VfPpkd-card__title"
+        course_sel = ".Kk7lMc, .tUJKGd, .tdCJdf"
+        due_sel = "time, .IMvYId, .dR9lJ, .bFjUmb"
+
+        def pick(el):
+            return " ".join(el.get_text(" ", strip=True).split()) if el else ""
+
+        rows = []
+        for card in soup.select(item_sel):
+            title = pick(card.select_one(title_sel))
+            if not title:
+                continue
+            course = pick(card.select_one(course_sel)) or "(科目不明/classroom)"
+            due = pick(card.select_one(due_sel))
+            rows.append({
+                "source": "classroom",
+                "title": title,
+                "course": course,
+                "due_raw": due,
+                "due_iso": "",
+                "due_ts": 0
+            })
+
+        print(f"🔍 {len(rows)} 件の課題を検出。")
+        if rows:
+            all_rows = rows
+            break  # どちらかで取得できたら終了
+
+    # === 出力 ===
+    Path("out").mkdir(exist_ok=True)
+    Path("out/debug.html").write_text(driver.page_source, encoding="utf-8")
+    write_outputs(all_rows, Path("out"))
+    print(f"✅ 最終 {len(all_rows)} 件の課題を検出。assignments.json / csv を出力しました。")
 
     # ブラウザで index.html を開く
     webbrowser.open(str(Path("index.html").resolve()))
 
-if __name__ == "__main__":
-    main()
+    driver.quit()
