@@ -85,7 +85,15 @@ def main():
     print("🌐 Classroom にアクセス中...")
     driver.get(target["url"])
 
-    WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, target["item"])))
+    # 新：
+    try:
+        WebDriverWait(driver, 30).until(
+            EC.presence_of_any_elements_located((By.CSS_SELECTOR, target["item"]))
+        )
+        print("✅ ページ要素を検出しました。")
+    except:
+        print("⚠️ 要素を検出できませんでしたが続行します。")
+
     print("✅ ページを読み込みました。")
 
     html = driver.page_source
