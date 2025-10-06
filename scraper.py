@@ -1,28 +1,24 @@
 # scraper.py
-import json, re, time, csv
+import json, re, time, csv, webbrowser
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
 from bs4 import BeautifulSoup
-
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-
 JST = timezone(timedelta(hours=9))
 
 def parse_due(text: str):
-    """日本語混じりの期限 → datetime(JST) に正規化"""
     if not text: return None
     t = " ".join(text.strip().split())
     pats = [
-        r"(\d{4})[\/\.-](\d{1,2})[\/\.-](\d{1,2})\s+(\d{1,2}):(\d{2})",  # 2025/10/12 23:55
-        r"(\d{1,2})月(\d{1,2})日\s*(\d{1,2}):(\d{2})",                   # 10月12日 23:55（年なし→今年）
-        r"(\d{1,2})[\/\.](\d{1,2})\s+(\d{1,2}):(\d{2})"                   # 10/12 23:55（年なし）
+        r"(\d{4})[\/\.-](\d{1,2})[\/\.-](\d{1,2})\s+(\d{1,2}):(\d{2})",
+        r"(\d{1,2})月(\d{1,2})日\s*(\d{1,2}):(\d{2})",
+        r"(\d{1,2})[\/\.](\d{1,2})\s+(\d{1,2}):(\d{2})"
     ]
     for p in pats:
         m = re.search(p, t)
@@ -36,7 +32,7 @@ def parse_due(text: str):
                 if "月" in p:
                     M, D, h, m2 = map(int, g)
                 else:
-                    M, D, h, m2 = map(int, g)  # 10/12 23:55
+                    M, D, h, m2 = map(int, g)
                 Y = nowY
             return datetime(Y, M, D, h, m2, tzinfo=JST)
         except:
@@ -66,118 +62,41 @@ def scrape_html(html: str, conf: dict, source: str):
         })
     return out
 
-def dedupe(rows):
-    rows = sorted(rows, key=lambda r: (r["title"].lower(), r["due_ts"] or 0))
-    merged = []
-    for r in rows:
-        if not merged: merged.append(r); continue
-        p = merged[-1]
-        same = r["title"].strip().lower() == p["title"].strip().lower()
-        close = (r["due_ts"] and p["due_ts"] and abs(r["due_ts"]-p["due_ts"]) <= 86400)
-        if same and (close or (not r["due_ts"] or not p["due_ts"])):
-            if r["due_ts"] and not p["due_ts"]:
-                p["due_ts"], p["due_iso"], p["due_raw"] = r["due_ts"], r["due_iso"], r["due_raw"]
-            p["course"] = " / ".join(sorted(set([p["course"], r["course"]])))
-            p["source"] = " / ".join(sorted(set(p["source"].split(" / ") + [r["source"]])))
-        else:
-            merged.append(r)
-    return merged
-
 def write_outputs(rows, outdir: Path):
     outdir.mkdir(parents=True, exist_ok=True)
-    # CSV
+    (outdir / "assignments.json").write_text(json.dumps(rows, ensure_ascii=False, indent=2), encoding="utf-8")
     with (outdir / "assignments.csv").open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        w.writerow(["title","course","due_iso(JST)","due_human","source"])
+        w.writerow(["タイトル","科目","期限","ソース"])
         for r in rows:
-            w.writerow([r["title"], r["course"], r["due_iso"], r["due_raw"], r["source"]])
-    # JSON
-    (outdir / "assignments.json").write_text(json.dumps(rows, ensure_ascii=False, indent=2), encoding="utf-8")
-    # ICS
-    lines = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Portfolio//Assignments//JP"]
-    now = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    def i(dt: datetime): return dt.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    for i_idx, r in enumerate(rows, 1):
-        if not r["due_ts"]: continue
-        dt = datetime.fromtimestamp(r["due_ts"], tz=JST)
-        summary = f"{r['title']}（{r['course']}）"
-        uid = f"{i_idx}-{abs(hash(summary))}@local"
-        lines += [
-            "BEGIN:VEVENT",
-            f"UID:{uid}",
-            f"DTSTAMP:{now}",
-            f"DTSTART:{i(dt)}",
-            f"DTEND:{i(dt+timedelta(minutes=30))}",
-            f"SUMMARY:{summary}",
-            f"DESCRIPTION:Source:{r['source']} Raw:{r['due_raw']}",
-            "END:VEVENT"
-        ]
-    (outdir / "assignments.ics").write_text("\r\n".join(lines), encoding="utf-8")
-
-def do_steps(driver, steps: list):
-    wait = WebDriverWait(driver, 40)  # 余裕をもって
-    for st in steps or []:
-        if "wait_css" in st:
-            # 広めに待つ（まずはページ骨格）
-            sel = st["wait_css"]
-            try:
-                wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, sel)))
-            except Exception:
-                # 骨格が変わるケースに備え、bodyだけでも一旦許容
-                wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "body")))
-        if "click_css" in st:
-            el = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, st["click_css"])))
-            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", el)
-            driver.execute_script("arguments[0].click();", el)  # clickより安定
-            time.sleep(0.3)
-        if "click_css_all" in st:
-            elems = driver.find_elements(By.CSS_SELECTOR, st["click_css_all"])
-            for el in elems:
-                try:
-                    driver.execute_script("arguments[0].scrollIntoView({block:'center'});", el)
-                    driver.execute_script("arguments[0].click();", el)
-                    time.sleep(0.15)
-                except Exception:
-                    pass
-        if "goto" in st:
-            driver.get(st["goto"])
-        if "iframe_css" in st:
-            iframe = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, st["iframe_css"])))
-            driver.switch_to.frame(iframe)
-
+            w.writerow([r["title"], r["course"], r["due_raw"], r["source"]])
+    print("✅ assignments.json / csv を出力しました。")
 
 def main():
     cfg = json.loads(Path("config.json").read_text(encoding="utf-8"))
+    target = cfg["targets"][0]
 
-    # === Chromeの設定 ===
     CHROMEDRIVER_PATH = r"C:\Users\hatar\Downloads\chromedriver-win64\chromedriver-win64\chromedriver.exe"
-
     options = Options()
-    options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")  # ここが重要！
-    options.add_argument("--start-maximized")
-
+    options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
     service = Service(CHROMEDRIVER_PATH)
     driver = webdriver.Chrome(service=service, options=options)
 
-    print("🌐 Classroomを開きます...")
-    driver.get("https://classroom.google.com/u/0/a/not-turned-in/all")
+    print("🌐 Classroom にアクセス中...")
+    driver.get(target["url"])
 
-    try:
-        WebDriverWait(driver, 20).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "body"))
-        )
-        print("✅ Classroomにアクセス成功！")
-    except:
-        print("⚠️ ページが読み込めませんでした。")
-
-    input("ページを確認したら Enter を押してください：")
+    WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, target["item"])))
+    print("✅ ページを読み込みました。")
 
     html = driver.page_source
     Path("out/debug.html").write_text(html, encoding="utf-8")
-    print("✅ ページHTMLを out/debug.html に保存しました。")
 
+    rows = scrape_html(html, target, target["name"])
+    write_outputs(rows, Path("out"))
     driver.quit()
 
+    # ブラウザで index.html を開く
+    webbrowser.open(str(Path("index.html").resolve()))
 
 if __name__ == "__main__":
     main()
