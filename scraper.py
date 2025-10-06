@@ -177,7 +177,9 @@ def main():
         print("タブを開きます…")
         for t in cfg["targets"]:
             print("GET:", t["url"])
-            driver.execute_script(f"window.open('{t['url']}', '_blank');")
+            # ★ 直接そのURLにアクセス（新しいタブを開かない）
+            driver.get(t["url"])
+            time.sleep(2)
 
         print("👉 各タブでログインしてください。完了したらここで Enter を押します。")
         input()
