@@ -73,94 +73,108 @@ def write_outputs(rows, outdir: Path):
     print("✅ assignments.json / csv を出力しました。")
 
 def main():
-    cfg = json.loads(Path("config.json").read_text(encoding="utf-8"))
-    target = cfg["targets"][0]
+    outdir = Path("out"); outdir.mkdir(exist_ok=True)
 
-    CHROMEDRIVER_PATH = r"C:\Users\hatar\Downloads\chromedriver-win64\chromedriver-win64\chromedriver.exe"
-    options = Options()
-    options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")  # 既に開いてるChromeへ接続
-    service = Service(CHROMEDRIVER_PATH)
-    driver = webdriver.Chrome(service=service, options=options)
+    def log(msg):
+        print(msg)
+        with (outdir / "log.txt").open("a", encoding="utf-8") as f:
+            f.write(msg + "\n")
 
-    # === 試すURLを2パターン ===
-    urls = [
-        "https://classroom.google.com/u/0/a/assigned/all",      # 割り当て済み
-        "https://classroom.google.com/u/0/a/not-turned-in/all", # 未提出
-    ]
+    try:
+        cfg = json.loads(Path("config.json").read_text(encoding="utf-8"))
+        CHROMEDRIVER_PATH = r"C:\Users\hatar\Downloads\chromedriver-win64\chromedriver-win64\chromedriver.exe"
 
-    all_rows = []
-    for url in urls:
-        print(f"🌐 Classroom にアクセス中... ({url})")
-        driver.get(url)
+        # 1) Driver起動
+        opts = Options()
+        opts.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
+        driver = webdriver.Chrome(service=Service(CHROMEDRIVER_PATH), options=opts)
 
-        try:
-            WebDriverWait(driver, 30).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "body"))
-            )
-            print("✅ ページの基本構造を検出。")
-        except:
-            print("⚠️ ページが完全に読み込まれませんでしたが続行します。")
-
-        # === 「展開」ボタンをクリック ===
-        print("🔽 展開ボタンをクリック中...")
-        toggle_selectors = [
-            "[aria-label*='展開']",
-            "button[aria-label*='展開']",
-            "div[role='button'][aria-label*='展開']",
-            "[data-tooltip*='展開']"
+        # 2) 2種類のURLを順に試す
+        urls = [
+            "https://classroom.google.com/u/0/a/assigned/all",
+            "https://classroom.google.com/u/0/a/not-turned-in/all",
         ]
-        for sel in toggle_selectors:
-            for b in driver.find_elements(By.CSS_SELECTOR, sel):
-                try:
-                    driver.execute_script("arguments[0].scrollIntoView({block:'center'});", b)
-                    time.sleep(0.3)
-                    b.click()
-                    print(f"　➡ 展開クリック: {sel}")
-                    time.sleep(0.4)
-                except Exception:
-                    pass
-
-        time.sleep(1.5)
-        html = driver.page_source
-        soup = BeautifulSoup(html, "lxml")
-
-        # 広めのセレクタ
-        item_sel = "div[role='listitem'], c-wiz[jsrenderer], .YVvGBb, .VfPpkd-card"
-        title_sel = "h3, h2, .TrZEUc, .YVvGBb, .VfPpkd-card__title"
-        course_sel = ".Kk7lMc, .tUJKGd, .tdCJdf"
-        due_sel = "time, .IMvYId, .dR9lJ, .bFjUmb"
 
         def pick(el):
             return " ".join(el.get_text(" ", strip=True).split()) if el else ""
 
-        rows = []
-        for card in soup.select(item_sel):
-            title = pick(card.select_one(title_sel))
-            if not title:
-                continue
-            course = pick(card.select_one(course_sel)) or "(科目不明/classroom)"
-            due = pick(card.select_one(due_sel))
-            rows.append({
-                "source": "classroom",
-                "title": title,
-                "course": course,
-                "due_raw": due,
-                "due_iso": "",
-                "due_ts": 0
-            })
+        rows_final = []
+        for url in urls:
+            log(f"🌐 アクセス: {url}")
+            driver.get(url)
 
-        print(f"🔍 {len(rows)} 件の課題を検出。")
-        if rows:
-            all_rows = rows
-            break  # どちらかで取得できたら終了
+            # ページ待機（緩め）
+            try:
+                WebDriverWait(driver, 30).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "body"))
+                )
+                log("✅ body検出")
+            except Exception as e:
+                log(f"⚠️ body待機失敗: {type(e).__name__}: {e}")
 
-    # === 出力 ===
-    Path("out").mkdir(exist_ok=True)
-    Path("out/debug.html").write_text(driver.page_source, encoding="utf-8")
-    write_outputs(all_rows, Path("out"))
-    print(f"✅ 最終 {len(all_rows)} 件の課題を検出。assignments.json / csv を出力しました。")
+            # 展開クリック
+            toggles = [
+                "[aria-label*='展開']",
+                "button[aria-label*='展開']",
+                "div[role='button'][aria-label*='展開']",
+                "[data-tooltip*='展開']",
+            ]
+            found = 0
+            for sel in toggles:
+                for b in driver.find_elements(By.CSS_SELECTOR, sel):
+                    try:
+                        driver.execute_script("arguments[0].scrollIntoView({block:'center'});", b)
+                        time.sleep(0.2); b.click(); time.sleep(0.2)
+                        found += 1
+                    except: pass
+            log(f"🔽 展開クリック数: {found}")
+            time.sleep(1.2)
 
-    # ブラウザで index.html を開く
-    webbrowser.open(str(Path("index.html").resolve()))
+            # HTML保存＆解析
+            html = driver.page_source
+            (outdir / "debug.html").write_text(html, encoding="utf-8")
+            try:
+                driver.save_screenshot(str(outdir / "screen.png"))
+            except: pass
 
-    driver.quit()
+            soup = BeautifulSoup(html, "lxml")
+            item_sel   = "div[role='listitem'], c-wiz[jsrenderer], .YVvGBb, .VfPpkd-card"
+            title_sel  = "h3, h2, .TrZEUc, .YVvGBb, .VfPpkd-card__title"
+            course_sel = ".Kk7lMc, .tUJKGd, .tdCJdf"
+            due_sel    = "time, .IMvYId, .dR9lJ, .bFjUmb"
+
+            rows = []
+            cards = soup.select(item_sel)
+            log(f"🔍 検出カード数: {len(cards)}")
+            for c in cards:
+                title = pick(c.select_one(title_sel))
+                if not title: 
+                    continue
+                course = pick(c.select_one(course_sel)) or "(科目不明/classroom)"
+                due    = pick(c.select_one(due_sel))
+                rows.append({
+                    "source": "classroom",
+                    "title": title,
+                    "course": course,
+                    "due_raw": due,
+                    "due_iso": "",
+                    "due_ts": 0,
+                })
+
+            if rows:
+                rows_final = rows
+                log(f"✅ 取得成功: {len(rows)}件（このURLを採用）")
+                break
+            else:
+                log("⚠️ 0件だったため次URLを試します…")
+
+        write_outputs(rows_final, outdir)
+        log(f"📦 最終件数: {len(rows_final)}  出力: assignments.json / csv")
+        webbrowser.open(str(Path("index.html").resolve()))
+        driver.quit()
+
+    except Exception as e:
+        err = f"💥 例外: {type(e).__name__}: {e}"
+        print(err)
+        with (Path("out") / "log.txt").open("a", encoding="utf-8") as f:
+            f.write(err + "\n")
